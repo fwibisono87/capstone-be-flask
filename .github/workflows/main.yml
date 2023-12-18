@@ -69,5 +69,5 @@ jobs:
             sudo docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
             sudo docker stop flask-app || true
             sudo docker rm flask-app || true
-            sudo docker run -d --name flask-app -p 80:5000 gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
+            sudo docker run -d --name flask-app -p 80:8000 gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
             rm /tmp/gcr_key.json"
