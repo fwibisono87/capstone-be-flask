@@ -18,7 +18,7 @@ def protected_route(decoded_token):
 
 @app.route('/predict', methods=['POST'])
 @check_auth
-def predict():
+def predict(decoded_token):
     data = request.json
 
     # Check if the image URL is provided
