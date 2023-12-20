@@ -17,6 +17,7 @@ def protected_route(decoded_token):
     return jsonify({'message': f'Hello, user {user_id}'})
 
 @app.route('/predict', methods=['POST'])
+@check_auth
 def predict():
     data = request.json
 
