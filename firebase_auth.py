@@ -1,6 +1,11 @@
+import firebase_admin
+from firebase_admin import credentials, auth
 from functools import wraps
 from flask import request, jsonify
-from firebase_admin import auth
+
+# Initialize Firebase Admin
+cred = credentials.Certificate('env/firebase-sa.json')
+firebase_admin.initialize_app(cred)
 
 def check_auth(f):
     @wraps(f)
@@ -16,6 +21,7 @@ def check_auth(f):
             decoded_token = auth.verify_id_token(token)
             return f(decoded_token, *args, **kwargs)
         except Exception as e:
-            return jsonify({'message': 'Token is invalid'}), 403
+            print(e)  # It's helpful to log the exception for debugging
+            return jsonify({'message': 'Token is invalid?'}), 403
 
     return decorated_function
