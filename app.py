@@ -12,7 +12,6 @@ def index():
 @app.route('/playground/protected-endpoint')
 @check_auth
 def protected_route(decoded_token):
-    # You can now use the decoded_token which contains the user information
     user_id = decoded_token['uid']
     return jsonify({'message': f'Hello, user {user_id}'})
 
@@ -48,7 +47,7 @@ def predict(decoded_token):
     except Exception as e:
         print(f"Error: {e}")
         if "Failed to download image" in str(e):
-            status_code = 400
+            status_code = 400 # For some reason cannot get image from GCS
         elif "URL does not point to a valid image" in str(e):
             status_code = 415  # Unsupported Media Type
         else:

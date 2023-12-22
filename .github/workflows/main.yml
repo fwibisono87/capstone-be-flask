@@ -10,44 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
 
-    - name: Install Dependencies
-      run: |
-        pip install --no-cache-dir -r requirements.txt
+      # Context: this step was basically a remnant of when we used the Next app.
+      # It is not necessary to do this when using Python, as the reqs will be installed
+      # in the container anyways.
+      # - name: Install Dependencies
+      #   run: |
+      #     pip install --no-cache-dir -r requirements.txt
 
-    - name: Decode Firebase SA Key
-      run: |
-        mkdir -p env && echo "${{ secrets.FB_SA_KEY }}" | base64 --decode > env/firebase-sa.json
+      - name: Decode Firebase SA Key
+        run: |
+          mkdir -p env && echo "${{ secrets.FB_SA_KEY }}" | base64 --decode > env/firebase-sa.json
 
-    - name: Authenticate with GCP and Download Model File
-      env:
-        COMPUTE_SA_KEY: ${{ secrets.COMPUTE_SA_KEY }}
-      run: |
-        echo "$COMPUTE_SA_KEY" | base64 --decode > gcp_key.json
-        gcloud auth activate-service-account --key-file=gcp_key.json
-        gsutil cp "${{ secrets.MODEL_URL }}" ./env/makara.h5
-        rm gcp_key.json
+      - name: Authenticate with GCP and Download Model File
+        env:
+          COMPUTE_SA_KEY: ${{ secrets.COMPUTE_SA_KEY }}
+        run: |
+          echo "$COMPUTE_SA_KEY" | base64 --decode > gcp_key.json
+          gcloud auth activate-service-account --key-file=gcp_key.json
+          gsutil cp "${{ secrets.MODEL_URL }}" ./env/makara.h5
+          rm gcp_key.json
 
-    - name: Build Docker Image
-      run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA .
+      - name: Build Docker Image
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/capstone-be-flask:$GITHUB_SHA .
 
-    - name: Login to Google Container Registry
-      env:
-        GCP_SA_KEY: ${{ secrets.COMPUTE_SA_KEY }}
-      run: |
-        echo "$GCP_SA_KEY" | base64 --decode | docker login -u _json_key --password-stdin https://gcr.io
+      - name: Login to Google Container Registry
+        env:
+          GCP_SA_KEY: ${{ secrets.COMPUTE_SA_KEY }}
+        run: |
+          echo "$GCP_SA_KEY" | base64 --decode | docker login -u _json_key --password-stdin https://gcr.io
 
-    - name: Push to Google Container Registry
-      run: |
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
+      - name: Push to Google Container Registry
+        run: |
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/capstone-be-flask:$GITHUB_SHA
 
   deploy-to-gcp:
     needs: build-and-deploy
@@ -66,8 +69,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no c010bsy3533@35.247.81.140 "
             echo '$COMPUTE_SA_KEY' | base64 --decode > /tmp/gcr_key.json
             sudo docker login -u _json_key --password-stdin https://gcr.io < /tmp/gcr_key.json
-            sudo docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
-            sudo docker stop flask-app || true
-            sudo docker rm flask-app || true
-            sudo docker run -d --name flask-app -p 80:8000 gcr.io/${{ secrets.GCP_PROJECT_ID }}/flask-app:$GITHUB_SHA
+            sudo docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/capstone-be-flask:$GITHUB_SHA
+            sudo docker stop capstone-be-flask || true
+            sudo docker rm capstone-be-flask || true
+            sudo docker run -d --name capstone-be-flask -p 80:8000 gcr.io/${{ secrets.GCP_PROJECT_ID }}/capstone-be-flask:$GITHUB_SHA
             rm /tmp/gcr_key.json"

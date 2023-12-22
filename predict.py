@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from io import BytesIO
 
 
-# Load the model at the start of the program
+# Load the model at the start of the program, so only done once
 MODEL_PATH = './env/makara.h5'
 model = load_model(MODEL_PATH)
 
@@ -18,7 +18,7 @@ def preprocess_image_from_url(image_url):
     image_url (str): The URL of the image.
 
     Returns:
-    np.array: Preprocessed image array.
+    np.array: Preprocessed image array (as needed by the model).
     """
     response = requests.get(image_url)
     
@@ -26,7 +26,8 @@ def preprocess_image_from_url(image_url):
     if response.status_code != 200:
         raise Exception(f"Failed to download image. Status code: {response.status_code}")
 
-    # Check if the content-type is of an image
+    # Check if the content-type is of an image. In theory, this is stupid because
+    # you can just spoof content-type, but hopefully the mobile app is not that dum.
     if 'image' not in response.headers.get('Content-Type', ''):
         raise Exception("URL does not point to a valid image.")
 
@@ -51,6 +52,7 @@ def make_prediction(img_array):
     str: Predicted class label.
     """
     classes = model.predict(img_array, batch_size=8)
+    # Really bad, non-extendible way to get labels, but will do for now
     class_labels = ["Bika Ambon", "Kerak Telor", "Molen", "Nasi Goreng", "Papeda Maluku", "Sate Padang", "Seblak"]
     class_index = np.argmax(classes)
     return class_labels[class_index]
